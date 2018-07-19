@@ -223,6 +223,43 @@ for my $sourcefile (@ARGV) {
         }
 	undef $drgarejson;
 
+
+
+# BEN'S ATTEMPT TO ADD LAND AREAS
+
+	# LAND AREAS
+	my $lndarejson = zerotojson($sourcefile, 'LNDARE');
+        foreach my $feature ( @{ $lndarejson->{'features'} } ) {
+            my $props = $feature->{'properties'};
+		my $startid = $id - 1;
+		foreach my $coord ( @{ $feature->{'geometry'}->{'coordinates'}->[0] } ) {
+		    next if ref $coord->[1];
+		    next if ref $coord->[0];
+		    next unless $coord->[1];
+		    next unless $coord->[0];
+		    next if $coord->[1] < 10;
+		    print $osm node(--$id, {'lat'=>$coord->[1], 'lon'=>$coord->[0]});
+		}
+		if ($startid != $id - 1) {
+		    $id--;
+		    print $osm
+" <way id='$id' uid='401715' user='rkuris' visible='true' version='2'>\n";
+
+		    for ( my $iid = $startid ; $iid > $id ; --$iid ) {
+		        print $osm "  <nd ref='$iid' />\n";
+		    }
+		    print $osm "  <nd ref='$startid' />\n";
+		    
+		    $name = $props->{'OBJNAM'};
+		    if (length $name != 0) { print $name; print "\n"; }	    
+           		print $osm "  <tag k='name' v='$name' />\n";
+		    print $osm " </way>\n";
+	        }
+        }
+	undef $lndarejson;
+# END BEN'S ATTEMPT TO ADD LAND AREAS
+	
+
 	# INDIVIDUAL SOUNDINGS
 	my $sndjson = zerotojson($sourcefile, 'SOUNDG');
         foreach my $feature ( @{ $sndjson->{'features'} } ) {
@@ -304,9 +341,20 @@ for my $sourcefile (@ARGV) {
         print $osm qq(</osm>\n);
         close($osm);
         print
-qq(java -jar mkgmap-r3363/mkgmap.jar --style-file=mkgmap-r3363/styles/marine-only -n "$mapid" --description="$description" --country-name="USA" --country-abbr="US" --region-name="California" --region-abbr=CA --lower-case --family-name="CA Marine" --max-jobs --copyright-message="NOAA maps are free, does not meet chart carriage regulations"  --license-file=LICENSE $osmoutname\n);
+
+    
+# ORIGINAL VERSION
+#qq(java -jar mkgmap-r3363/mkgmap.jar --style-file=mkgmap-r3363/styles/marine-only -n "$mapid" --description="$description" --country-name="USA" --country-abbr="US" --region-name="California" --region-abbr=CA --lower-case --family-name="CA Marine" --max-jobs --copyright-message="NOAA maps are free, does not meet chart carriage regulations"  --license-file=LICENSE $osmoutname\n);
+#       system
+#qq(java -jar mkgmap-r3363/mkgmap.jar --style-file=mkgmap-r3363/styles/marine-only -n "$mapid" --description="$description" --country-name="USA" --country-abbr="US" --region-name="California" --region-abbr=CA --lower-case --family-name="CA Marine" --max-jobs --copyright-message="NOAA maps are free, does not meet chart carriage regulations"  --license-file=LICENSE $osmoutname);
+# END ORIGINAL VERSION
+
+# BEN'S CHANGES
+qq(java -jar mkgmap-r3363/mkgmap.jar --style-file=/Users/benha/Desktop/marinemap-master/perl/styles/marine-only -n "$mapid" --transparent --description="$description" --country-name="USA" --country-abbr="US" --region-name="California" --region-abbr=CA --lower-case --family-name="CA Marine" --max-jobs --copyright-message="NOAA maps are free, does not meet chart carriage regulations" $osmoutname\n);
         system
-qq(java -jar mkgmap-r3363/mkgmap.jar --style-file=mkgmap-r3363/styles/marine-only -n "$mapid" --description="$description" --country-name="USA" --country-abbr="US" --region-name="California" --region-abbr=CA --lower-case --family-name="CA Marine" --max-jobs --copyright-message="NOAA maps are free, does not meet chart carriage regulations"  --license-file=LICENSE $osmoutname);
+qq(java -jar mkgmap-r3363/mkgmap.jar --style-file=/Users/benha/Desktop/marinemap-master/perl/styles/marine-only -n "$mapid" --transparent --description="$description" --country-name="USA" --country-abbr="US" --region-name="California" --region-abbr=CA --lower-case --family-name="CA Marine" --max-jobs --copyright-message="NOAA maps are free, does not meet chart carriage regulations" $osmoutname);
+# END BEN'S CHANGES
+
 
 sub mtofeet
 {
